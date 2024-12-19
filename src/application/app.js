@@ -30,6 +30,12 @@ app.use(transactionRoute);
 app.use(reviewRoute);
 
 app.use(errorMiddleware);
+// konfigurasi cors
+app.use(cors({
+    origin: 'https://www.infokus.my.id/',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true,
+}));
 
 let message = "";
 if (process.env.NODE_ENV === "development") {

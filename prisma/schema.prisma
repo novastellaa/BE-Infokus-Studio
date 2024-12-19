@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,22 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  admin
-  user
-}
-
 model User {
-  id       String @id @default(cuid())
-  email    String @unique
-  password String @db.VarChar(100)
-  name     String @db.VarChar(255)
-  phone    String @db.VarChar(20)
-  role     Role   @default(user)
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String        @db.VarChar(100)
+  name         String        @db.VarChar(255)
+  phone        String        @db.VarChar(20)
+  role         Role          @default(user)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
   reservations Reservation[]
   Review       Review[]
 
@@ -36,19 +23,167 @@ model User {
 }
 
 model Category {
-  id   Int    @id @default(autoincrement())
-  name String @db.VarChar(255)
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  images            Image[]
-  category_packages CategoryPackage[]
+  id                Int               @id @default(autoincrement())
+  name              String            @db.VarChar(255)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  deletedAt         DateTime?         @map("deleted_at")
   category_addons   CategoryAddon[]
+  category_packages CategoryPackage[]
+  images            Image[]
   reservations      Reservation[]
 
   @@map("categories")
+}
+
+model Image {
+  id                  Int                @id @default(autoincrement())
+  imageUrl            String             @map("image_url") @db.VarChar(255)
+  entity              ImageEntity
+  categoryId          Int?               @map("category_id")
+  transactionDetailId Int?               @map("transaction_detail_id")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  category            Category?          @relation(fields: [categoryId], references: [id])
+  transaction_detail  TransactionDetail? @relation(fields: [transactionDetailId], references: [id])
+
+  @@index([categoryId], map: "images_category_id_fkey")
+  @@index([transactionDetailId], map: "images_transaction_detail_id_fkey")
+  @@map("images")
+}
+
+model CategoryPackage {
+  id           Int           @id @default(autoincrement())
+  name         String        @db.VarChar(255)
+  description  String        @db.Text
+  price        Int
+  categoryId   Int           @map("category_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  deletedAt    DateTime?     @map("deleted_at")
+  category     Category      @relation(fields: [categoryId], references: [id])
+  reservations Reservation[]
+
+  @@index([categoryId], map: "category_packages_category_id_fkey")
+  @@map("category_packages")
+}
+
+model CategoryAddon {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @db.VarChar(255)
+  price              Int
+  unit               String              @db.VarChar(255)
+  categoryId         Int                 @map("category_id")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  deletedAt          DateTime?           @map("deleted_at")
+  category           Category            @relation(fields: [categoryId], references: [id])
+  reservation_detail ReservationDetail[]
+
+  @@index([categoryId], map: "category_addons_category_id_fkey")
+  @@map("category_addons")
+}
+
+model TimeSlot {
+  id           Int           @id @default(autoincrement())
+  time         DateTime      @map("time_slot") @db.Time(0)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  deletedAt    DateTime?     @map("deleted_at")
+  reservations Reservation[]
+
+  @@map("time_slots")
+}
+
+model Reservation {
+  id                 Int                 @id @default(autoincrement())
+  date               DateTime            @map("date") @db.Date
+  total              Int
+  status             ReservationStatus   @default(pending)
+  userId             String              @map("user_id")
+  categoryId         Int                 @map("category_id")
+  categoryPackageId  Int                 @map("category_package_id")
+  timeSlotId         Int                 @map("time_slot_id")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  cancelledAt        DateTime?           @map("cancelled_at")
+  successAt          DateTime?           @map("success_at")
+  reservation_detail ReservationDetail[]
+  category           Category            @relation(fields: [categoryId], references: [id])
+  categoryPackage    CategoryPackage     @relation(fields: [categoryPackageId], references: [id])
+  timeSlot           TimeSlot            @relation(fields: [timeSlotId], references: [id])
+  user               User                @relation(fields: [userId], references: [id])
+  review             Review[]
+  transactions       Transaction?
+
+  @@index([categoryId], map: "reservations_category_id_fkey")
+  @@index([categoryPackageId], map: "reservations_category_package_id_fkey")
+  @@index([timeSlotId], map: "reservations_time_slot_id_fkey")
+  @@index([userId], map: "reservations_user_id_fkey")
+  @@map("reservations")
+}
+
+model ReservationDetail {
+  id              Int           @id @default(autoincrement())
+  quantity        Int
+  reservationId   Int           @map("reservation_id")
+  categoryAddonId Int           @map("category_addon_id")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  categoryAddon   CategoryAddon @relation(fields: [categoryAddonId], references: [id])
+  reservation     Reservation   @relation(fields: [reservationId], references: [id])
+
+  @@index([categoryAddonId], map: "reservation_details_category_addon_id_fkey")
+  @@index([reservationId], map: "reservation_details_reservation_id_fkey")
+  @@map("reservation_details")
+}
+
+model Transaction {
+  id                 Int                 @id @default(autoincrement())
+  total              Int
+  status             TransactionStatus   @default(unpaid) @map("transaction_status")
+  type               TransactionType     @map("transaction_type")
+  reservationId      Int                 @unique(map: "Transaction_reservation_id_key") @map("reservation_id")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  expiredAt          DateTime?           @map("exprired_at")
+  paidoffAt          DateTime?           @map("paidoff_at")
+  reservation        Reservation         @relation(fields: [reservationId], references: [id])
+  transaction_detail TransactionDetail[]
+
+  @@map("transaction")
+}
+
+model TransactionDetail {
+  id            Int               @id @default(autoincrement())
+  total         Int
+  type          TransactionType   @map("transaction_type")
+  isValid       TransactionValid? @map("is_valid")
+  transactionId Int               @map("transaction_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  images        Image[]
+  transaction   Transaction       @relation(fields: [transactionId], references: [id])
+
+  @@index([transactionId], map: "transaction_details_transaction_id_fkey")
+  @@map("transaction_details")
+}
+
+model Review {
+  id            Int         @id @default(autoincrement())
+  rating        Int
+  review        String      @db.Text
+  reservationId Int         @map("reservation_id")
+  userId        String      @map("user_id")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@index([reservationId], map: "reviews_reservation_id_fkey")
+  @@index([userId], map: "reviews_user_id_fkey")
+  @@map("reviews")
+}
+
+enum Role {
+  admin
+  user
 }
 
 enum ImageEntity {
@@ -56,115 +191,10 @@ enum ImageEntity {
   transaction
 }
 
-model Image {
-  id       Int         @id @default(autoincrement())
-  imageUrl String      @map("image_url") @db.VarChar(255)
-  entity   ImageEntity
-
-  categoryId Int?      @map("category_id")
-  category   Category? @relation(fields: [categoryId], references: [id])
-
-  transactionDetailId Int?               @map("transaction_detail_id")
-  transaction_detail  TransactionDetail? @relation(fields: [transactionDetailId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("images")
-}
-
-model CategoryPackage {
-  id          Int    @id @default(autoincrement())
-  name        String @db.VarChar(255)
-  description String @db.Text
-  price       Int    @db.Int
-
-  categoryId Int      @map("category_id")
-  category   Category @relation(fields: [categoryId], references: [id])
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  reservations Reservation[]
-
-  @@map("category_packages")
-}
-
-model CategoryAddon {
-  id    Int    @id @default(autoincrement())
-  name  String @db.VarChar(255)
-  price Int    @db.Int
-  unit  String @db.VarChar(255)
-
-  categoryId Int      @map("category_id")
-  category   Category @relation(fields: [categoryId], references: [id])
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  reservation_detail ReservationDetail[]
-
-  @@map("category_addons")
-}
-
-model TimeSlot {
-  id   Int      @id @default(autoincrement())
-  time DateTime @map("time_slot") @db.Time()
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  deletedAt DateTime? @map("deleted_at")
-
-  reservations Reservation[]
-
-  @@map("time_slots")
-}
-
 enum ReservationStatus {
   pending
   success
   cancelled
-}
-
-model Reservation {
-  id     Int               @id @default(autoincrement())
-  date   DateTime          @map("date") @db.Date()
-  total  Int               @db.Int
-  status ReservationStatus @default(pending)
-
-  userId            String          @map("user_id")
-  user              User            @relation(fields: [userId], references: [id])
-  categoryId        Int             @map("category_id")
-  category          Category        @relation(fields: [categoryId], references: [id])
-  categoryPackageId Int             @map("category_package_id")
-  categoryPackage   CategoryPackage @relation(fields: [categoryPackageId], references: [id])
-  timeSlotId        Int             @map("time_slot_id")
-  timeSlot          TimeSlot        @relation(fields: [timeSlotId], references: [id])
-
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  cancelledAt DateTime? @map("cancelled_at")
-  successAt   DateTime? @map("success_at")
-
-  reservation_detail ReservationDetail[]
-  transactions       Transaction?
-  review             Review[]
-
-  @@map("reservations")
-}
-
-model ReservationDetail {
-  id       Int @id @default(autoincrement())
-  quantity Int @db.Int
-
-  reservationId   Int           @map("reservation_id")
-  reservation     Reservation   @relation(fields: [reservationId], references: [id])
-  categoryAddonId Int           @map("category_addon_id")
-  categoryAddon   CategoryAddon @relation(fields: [categoryAddonId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("reservation_details")
 }
 
 enum TransactionStatus {
@@ -181,54 +211,4 @@ enum TransactionType {
 enum TransactionValid {
   true
   false
-}
-
-model Transaction {
-  id     Int               @id @default(autoincrement())
-  total  Int               @db.Int
-  status TransactionStatus @default(unpaid) @map("transaction_status")
-  type   TransactionType   @map("transaction_type")
-
-  reservationId Int         @unique @map("reservation_id")
-  reservation   Reservation @relation(fields: [reservationId], references: [id])
-
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  expiredAt DateTime? @map("exprired_at")
-  paidoffAt DateTime? @map("paidoff_at")
-
-  transaction_detail TransactionDetail[]
-}
-
-model TransactionDetail {
-  id      Int               @id @default(autoincrement())
-  total   Int               @db.Int
-  type    TransactionType   @map("transaction_type")
-  isValid TransactionValid? @map("is_valid")
-
-  transactionId Int         @map("transaction_id")
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  images Image[]
-
-  @@map("transaction_details")
-}
-
-model Review {
-  id     Int    @id @default(autoincrement())
-  rating Int    @db.Int
-  review String @db.Text
-
-  reservationId Int         @map("reservation_id")
-  reservation   Reservation @relation(fields: [reservationId], references: [id])
-
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("reviews")
 }

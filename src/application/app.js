@@ -18,7 +18,7 @@ export const app = express();
 
 // konfigurasi cors
 app.use(cors({
-    origin: 'https://www.infokus.my.id/',
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
 }));

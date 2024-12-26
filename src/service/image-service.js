@@ -5,70 +5,67 @@ import { Validation } from "../validation/validation.js";
 import { ImageValidation } from "../validation/image-validation.js";
 import { v4 as uuidv4 } from "uuid";
 
-
 export class ImageService {
-  static getKeyFromUrl(url) {
-    const publicUrlBase = process.env.CLOUDFLARE_R2_PUBLIC_URL + "/";
-    return url.startsWith(publicUrlBase)
-      ? url.slice(publicUrlBase.length)
-      : url;
-  }
-
-  static async upload(request) {
-    if (request.images.length < 1) {
-      throw new ResponseError(
-        "error",
-        400,
-        "Gambar yang diunggah minimal 1 gambar",
-      );
+    static getKeyFromUrl(url) {
+        const publicUrlBase = process.env.AWS_PUBLIC_URL + "/";
+        return url.startsWith(publicUrlBase) ? url.slice(publicUrlBase.length) : url;
     }
 
-    const filesRequest = await Validation.validate(
-      ImageValidation.UPLOAD,
-      request,
-    );
+    static async upload(request) {
+        if (request.images.length < 1) {
+            throw new ResponseError(
+                "error",
+                400,
+                "Gambar yang diunggah minimal 1 gambar",
+            );
+        }
 
-    const images = [];
+        const filesRequest = await Validation.validate(
+            ImageValidation.UPLOAD,
+            request,
+        );
 
-    for (const file of filesRequest.images) {
-      const uniqueFileName = `${uuidv4()}`;
-      const key = `${request.entity}/${uniqueFileName}`;
+        const images = [];
 
-      const params = {
-        Bucket: process.env.CLOUDFLARE_R2_BUCKET,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      };
+        for (const file of filesRequest.images) {
+            const uniqueFileName = `${uuidv4()}`;
+            const key = `${request.entity}/${uniqueFileName}`;
 
-      const command = new PutObjectCommand(params);
+            const params = {
+                Bucket: process.env.AWS_S3_BUCKET,
+                Key: key,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            };
 
-      try {
-        await s3Client.send(command);
-        const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`;
-        images.push(publicUrl);
-      } catch (error) {
-        console.error("Error uploading image:", error);
-        throw new ResponseError("Upload Error", 500, "Gagal mengunggah gambar");
-      }
+            const command = new PutObjectCommand(params);
+
+            try {
+                await s3Client.send(command);
+                const publicUrl = `${process.env.AWS_PUBLIC_URL}/${key}`;
+                images.push(publicUrl);
+            } catch (error) {
+                console.error("Error uploading image:", error);
+                throw new ResponseError("Upload Error", 500, "Gagal mengunggah gambar");
+            }
+        }
+
+        return images;
     }
 
-    return images;
-  }
+    static async deleteImageFromS3(imageUrl) {
+        const key = this.getKeyFromUrl(imageUrl);
+        const deleteCommand = new DeleteObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: key,
+        });
 
-  static async deleteImageFromR2(imageUrl) {
-    const key = this.getKeyFromUrl(imageUrl);
-    const deleteCommand = new DeleteObjectCommand({
-      Bucket: process.env.CLOUDFLARE_R2_BUCKET,
-      Key: key,
-    });
-
-    try {
-      await s3Client.send(deleteCommand);
-      console.log(`Successfully deleted image: ${key}`);
-    } catch (error) {
-      console.error(`Error deleting image ${key}:`, error);
-      throw new ResponseError("Delete Error", 500, "Gagal menghapus gambar");
+        try {
+            await s3Client.send(deleteCommand);
+            console.log(`Successfully deleted image: ${key}`);
+        } catch (error) {
+            console.error(`Error deleting image ${key}:`, error);
+            throw new ResponseError("Delete Error", 500, "Gagal menghapus gambar");
+        }
     }
-  }
 }

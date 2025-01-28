@@ -84,8 +84,6 @@ Proyek ini menggunakan:
 
 ---
 
-Jika Anda memiliki pertanyaan atau masukan, jangan ragu untuk menghubungi saya melalui [email@example.com](mailto:email@example.com). 😊
+Jika Anda memiliki pertanyaan atau masukan, jangan ragu untuk menghubungi saya melalui [novastella210@gmail.com](mailto:nocastella210@gmail.com). 😊
 
 --- 
-
-Anda dapat menyesuaikan teks di atas sesuai dengan kebutuhan proyek Anda.

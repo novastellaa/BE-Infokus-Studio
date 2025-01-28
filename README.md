@@ -11,6 +11,11 @@ Backend untuk aplikasi reservasi foto studio di Infokus Studio yang terletak di 
 - **Keamanan**: Autentikasi menggunakan JSON Web Token (JWT).
 - **Database Relasional**: MySQL sebagai penyimpanan data.
 
+## 🔍 Dokumentasi API
+
+Dokuemetasi di publikasi menggunakan Postman Documentation, dapat dilihat di link berikut: 
+[Dokumentasi Infokus Studio]([https://github.com/username/project-name](https://documenter.getpostman.com/view/29673433/2sAYQWKDhv)) 
+
 ## ⚙️ Teknologi yang Digunakan
 
 - **Node.js**: Platform server-side.

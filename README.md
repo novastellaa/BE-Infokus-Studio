@@ -1,8 +1,8 @@
 ---
 
-# Backend Website Reservasi Foto Studio
+# Backend Website Reservasi Infokus Studio
 
-Backend untuk aplikasi reservasi foto studio, dibuat menggunakan Express.js dan MySQL database. Proyek ini memungkinkan pengelolaan jadwal, layanan, dan reservasi studio foto secara efisien.
+Backend untuk aplikasi reservasi foto studio di Infokus Studio yang terletak di Purwokerto, dibuat menggunakan Express.js dan MySQL database. Proyek ini memungkinkan pengelolaan jadwal, layanan, dan reservasi studio foto secara efisien.
 
 ## 📋 Fitur
 
